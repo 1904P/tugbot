@@ -1,0 +1,215 @@
+!pip install -U python-telegram-bot
+
+import os
+import random 
+
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "7296723491:AAEcK3GzEDuFX8zrml68dMZ7vifGa1hXJio")
+
+from telegram import (
+    Update,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+)
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+    filters,
+)
+
+
+async def run():
+    await app.initialize()
+    await app.start()
+    print("✅ Бот запущен. Напиши ему /start в Telegram.")
+    try:
+        await app.updater.start_polling()
+        # держим процесс «вечно»
+        await asyncio.Event().wait()
+    finally:
+        # корректная остановка
+        await app.updater.stop()
+        await app.stop()
+        await app.shutdown()
+
+await run()
+
+# базовые функции
+
+from getpass import getpass
+import nest_asyncio, asyncio, logging
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+
+# технические штуки для запуска в Colab:
+nest_asyncio.apply()
+logging.basicConfig(level=logging.INFO)
+
+# описание функций, которые будут выполняться при нажатии на кнопки
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Привет! Я запущен в Colab через polling 🐍")
+
+async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Команды: /start /help")
+
+async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
+  await update.message.reply_text("Команды: ✅ Бот запущен. Напиши ему /start в Telegram.")
+
+async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE):
+  await update.message.reply_text("hiiiiiii")
+
+# создание Application и кнопок
+app = ApplicationBuilder().token(BOT_TOKEN).build()
+app.add_handler(CommandHandler("start", start))
+app.add_handler(CommandHandler("help", help_cmd))
+app.add_handler(CommandHandler("about",about))
+app.add_handler(CommandHandler("hello",hello))
+
+#Обработка текстов и фильтры
+
+from telegram.ext import MessageHandler, filters
+
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    await update.message.reply_text(f"Ты сказал: {text}")
+
+async def communicate(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    flag = False
+    text = update.message.text
+
+    if "Hello" in text :
+      flag = True
+      #text = update.message.text
+      await update.message.reply_text(f"Hiiii")
+
+    if "How are you" in text:
+      flag = True
+      await update.message.reply_text(f"😊")
+
+    if "Bye" in text:
+      flag = True
+      await update.message.reply_text(f"Bye 👋 ")
+
+    if "About" in text:
+      flag = True
+      await update.message.reply_text(f"This bot was created for learning ")
+
+    if flag == False:
+      await update.message.reply_text(f"Unefortunately, I haven't learnt to answer on it yet")
+
+    if "Derivative" in text:
+      flag = True
+
+#app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, communicate))
+
+# menu
+
+from telegram import ReplyKeyboardMarkup, KeyboardButton
+from telegram.ext import CommandHandler
+
+reply_kb = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton("Hello"), KeyboardButton("Bye")],
+        [KeyboardButton("How are you?")],
+        [KeyboardButton("About")],
+        [KeyboardButton( "Derivative")]
+    ],
+    resize_keyboard=True
+)
+
+#What is you attitude to bot's creating?
+
+async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Выберите кнопку:", reply_markup=reply_kb)
+
+app.add_handler(CommandHandler("menu", menu))
+
+from telegram.ext import CommandHandler
+async def question(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Отправляем вопрос с кнопками Да / Нет."""
+    keyboard = [
+        [
+            InlineKeyboardButton("Да", callback_data="answer_yes"),
+            InlineKeyboardButton("Нет", callback_data="answer_no"),
+        ]
+    ]
+    markup = InlineKeyboardMarkup(keyboard)
+
+    await update.message.reply_text(
+        "Тебе нравится писать ботов на Python?", reply_markup=markup
+    )
+
+
+async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработка нажатий на inline-кнопки."""
+    query = update.callback_query
+    await query.answer()  # отвечаем Telegram, что всё ок (обязательный шаг)
+
+    if query.data == "answer_yes":
+        text = "Круто! Продолжай в том же духе 💻🔥"
+    elif query.data == "answer_no":
+        text = "Понимаю, не всегда всё сразу получается. Главное — не сдаваться 🙂"
+    else:
+        text = "Странный ответ, но я его уважаю 😄"
+
+    # Можно отредактировать исходное сообщение с кнопками
+    await query.edit_message_text(text)
+
+
+app.add_handler(CommandHandler("question", question))
+
+# how are you?
+
+async def mood(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+  keyboard = [
+        [
+            InlineKeyboardButton("Perfect", callback_data="answer_perfect"),
+            InlineKeyboardButton("Bad", callback_data="answer_bad"),
+        ]
+    ]
+  markup = InlineKeyboardMarkup(keyboard)
+
+  await update.message.reply_text(
+        "How is your mood?", reply_markup=markup
+  )
+
+
+async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "answer_perfect":
+        text = "So cool!"
+    elif query.data == "answer_no":
+        text = "Even superheroes get sad sometimes "
+    else:
+        text = "There is no better moment then now"
+
+    await query.edit_message_text(text)
+
+
+app.add_handler(CommandHandler("mood", mood))
+
+#sending photoes
+
+photo_massive=[("https://candlescience.ru/wp-content/uploads/2024/10/Green_Leaves.webp"),
+               ("https://hips.hearstapps.com/hmg-prod/images/autumn-fall-foliage-leaves-change-colors-to-orange-and-red-news-photo-1667589874.jpg?crop=1.00xw:0.708xh;0,0.154xh&resize=1200:*"),
+               ("https://images.stockcake.com/public/1/c/8/1c89bbc8-eb46-4d4b-9ad4-07ad46581641_large/frosted-winter-leaves-stockcake.jpg")
+               ]  # случайная картинка
+
+async def send_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Присылаем фото по URL."""
+    await update.message.reply_photo(
+        photo=random.choice(photo_massive),
+        caption="Вот случайная картинка с интернета 📷",
+    )
+
+app.add_handler(CommandHandler("sendphoto", send_photo))
+
