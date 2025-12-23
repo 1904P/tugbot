@@ -1,0 +1,71 @@
+import tkinter
+master = tkinter.Tk()
+
+x0= 250
+y0= 250
+
+def draw(event):
+
+    if event.keysym == 'Up':
+        canvas.move(circle,0,-10)
+
+    if event.keysym == 'Down':
+        canvas.move(circle,0,10)
+
+    if event.keysym == 'Left':
+        canvas.move(circle,-10,0)
+
+    if event.keysym == 'Right':
+        canvas.move(circle,10,0)
+
+    x1,y1,x2,y2 = canvas.coords(circle)
+  
+    if x1 >500:
+        canvas.move(circle,-500,0)
+
+    if x2< 0:
+        canvas.move(circle,500,0)
+
+    if y1> 500:
+        canvas.move(circle,0,-500)
+
+    if y2 < 0:
+        canvas.move(circle,0,500)
+  
+    d = (((x1+x2)/2-x0)**2+((y1+y2)/2-y0)**2)**0.5
+
+    if d> 100:
+        canvas.itemconfig(circle,fill='#FFA200')
+
+    else:
+        canvas.itemconfig(circle,fill='#052D6E')
+
+def show_key(event):
+    label.config(text=event.keysym)
+
+def win():
+
+    x1,y1,x2,y2 = canvas.coords(circle)
+
+    if (y1+y2)/2> 420 and (x1+x2)/2== x0:
+        label.config(text="U WON !")
+        canvas.itemconfig(circle,fill='#FFCC73')
+
+canvas = tkinter.Canvas(master,bg='#E165B9',height=500,width=500)
+
+canvas.pack()
+
+circle = canvas.create_oval((240,240),(260,260),fill='#052D6E')
+
+label = tkinter.Label(master,text="Hello, world!")
+
+label.pack()
+
+def key(event):
+    show_key(event)
+    draw(event)
+    win()
+
+master.bind("<KeyPress>",key)
+
+master.mainloop()
